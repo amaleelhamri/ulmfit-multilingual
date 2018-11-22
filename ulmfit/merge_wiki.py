@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', required=True,
                         help='the output directory where the merged Wikipedia '
                              'documents should be saved')
-    parser.add_argument('-n', '--num-tokens', type=int, default=Inf,
+    parser.add_argument('-n', '--num-tokens', type=int, default=1E100,
                         help='the # of tokens that the merged document should '
                              'contain (default: 100M)')
     args = parser.parse_args()
