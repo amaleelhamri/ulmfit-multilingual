@@ -55,4 +55,4 @@ n|N ) echo "Exiting";exit 1;;
 * ) echo "Invalid answer";exit 1;;
 esac
 
-python -m merge_wiki.py -i "${EXTR_PATH}" -o "${OUT_PATH}" 
+python -m ulmfit.merge_wiki -i "${EXTR_PATH}" -o "${OUT_PATH}" 
