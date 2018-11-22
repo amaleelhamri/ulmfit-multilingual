@@ -57,7 +57,7 @@ class SentencepieceTokenizer(BaseTokenizer):
 
 def get_sentencepiece(path:PathOrStr, trn_path:Path, name:str, rules:ListRules=None,
                       vocab_size:int=30000, model_type:str='unigram', input_sentence_size:int=1E7, 
-                      pad_idx:int=PAD_TOKEN_ID):
+                      pad_idx:int=PAD_TOKEN_ID, character_coverage:float=1.0):
     try:
         import sentencepiece as spm
     except ImportError:
@@ -81,7 +81,7 @@ def get_sentencepiece(path:PathOrStr, trn_path:Path, name:str, rules:ListRules=N
             f.write(raw_text)
       
         sp_params = f"--input={raw_text_path} --pad_id={pad_idx} --unk_id=0 " \
-                    f"--character_coverage=1.0 --bos_id=-1 --eos_id=-1 " \
+                    f"--character_coverage={character_coverage} --bos_id=-1 --eos_id=-1 " \
                     f"--input_sentence_size={int(input_sentence_size)} " \
                     f"--model_prefix={path / 'models' / 'spm'} " \
                     f"--vocab_size={vocab_size} --model_type={model_type} "
