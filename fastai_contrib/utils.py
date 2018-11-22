@@ -310,7 +310,7 @@ def read_clas_data(dir_path, dataset, lang) -> Tuple[Dict[str, List[List[str]]],
     processor = processors[dataset]
 
     toks, lbls = {}, {}
-    toks[TRN], lbls[TRN] = processor(dir_path, lang, TRN)
+    toks[TRN], lbls[TRN] = processor(dir_path, lang, TRN) # TODO: add sentencepiece path
     toks[TST], lbls[TST] = processor(dir_path, lang, TST)
 
     if dataset == IMDB:
