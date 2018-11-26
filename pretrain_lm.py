@@ -25,7 +25,7 @@ from collections import Counter
 # cupy needs to be installed for QRNN
 
 def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vocab=60000,
-                bs=70, bptt=70, name='wt-103', num_epochs=10, ds_pct=1.0):
+                bs=70, bptt=70, name='wt-103', num_epochs=10, ds_pct=1.0, spm_dir=None):
     """
     :param dir_path: The path to the directory of the file.
     :param lang: the language unicode
@@ -37,7 +37,8 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vo
     :param bs: The batch size.
     :param bptt: The back-propagation-through-time sequence length.
     :param name: The name used for both the model and the vocabulary.
-    :param model_dir: The path to the directory where the models should be saved
+    :param spm_dir: The path to load spm_dir from. If none, looks for models dir below
+                    dir_path
     """
     results = {}
     model_dir = 'models' # removed from params, as it is absolute models location in train_clas and here it is relative
@@ -50,6 +51,13 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vo
     assert dir_path.exists()
     model_dir = Path(model_dir)
     model_dir.mkdir(exist_ok=True)
+
+    if spm_dir:
+        spm_dir=Path(spm_dir)
+    else:
+        spm_dir = dir_path
+    assert spm_dir.exists()
+
     print('Batch size:', bs)
     print('Max vocab:', max_vocab)
     model_name = 'qrnn' if qrnn else 'lstm'
@@ -70,7 +78,9 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vo
         read_file(trn_path, 'train')
         read_file(val_path, 'valid')
 
-        sp = get_sentencepiece(dir_path, trn_path, name, vocab_size=max_vocab)
+        # assume sentencepiece training is done after merge of wiki
+        # here we're just loading the trained spm model
+        sp = get_sentencepiece(spm_dir, None, 'wt-all', vocab_size=max_vocab)
 
         data_lm = TextLMDataBunch.from_csv(dir_path, 'train.csv', **sp)
         itos = data_lm.train_ds.vocab.itos
