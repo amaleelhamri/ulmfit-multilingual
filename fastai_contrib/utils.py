@@ -9,6 +9,7 @@ import torch
 from tqdm import tqdm
 import re
 import csv
+from shutil import copyfile
 
 from functools import reduce
 from fastai.text.transform import Tokenizer, BaseTokenizer, Vocab
@@ -69,16 +70,20 @@ def get_sentencepiece(path:PathOrStr, trn_path:Path, name:str, rules:ListRules=N
     os.makedirs(path / 'models', exist_ok=True)
     rules = rules if rules is not None else []
 
-    
-    # load the text frmo the train tokens file
-    text = [line.rstrip('\n') for line in open(trn_path)]
-    text = list(filter(None, text))
-
     if not os.path.isfile(path / 'models' / 'spm.model') or not os.path.isfile(path / 'models' / f'itos_{name}.pkl'):
-        raw_text = reduce(lambda t, rule: rule(t), rules, '\n'.join(text))
+        # load the text frmo the train tokens file
+        text = [line.rstrip('\n') for line in open(trn_path)]
+        text = list(filter(None, text))
+        
         raw_text_path = path / cache_name / 'all_text.txt'
-        with open(raw_text_path, 'w') as f:
-            f.write(raw_text)
+        if rules != []:
+            raw_text = reduce(lambda t, rule: rule(t), rules, '\n'.join(text))
+            with open(raw_text_path, 'w') as f:
+                f.write(raw_text)
+        else:
+            # work around for now. OSX can't write 2GB+ data.
+            copyfile(trn_path,raw_text_path)
+            del text
       
         sp_params = f"--input={raw_text_path} --pad_id={pad_idx} --unk_id=0 " \
                     f"--character_coverage={character_coverage} --bos_id=-1 --eos_id=-1 " \
@@ -97,7 +102,7 @@ def get_sentencepiece(path:PathOrStr, trn_path:Path, name:str, rules:ListRules=N
     vocab = Vocab(pickle.load(open(path / 'models' / f'itos_{name}.pkl', 'rb')))
     # We cannot use lambdas or local methods here, since `tok_func` needs to be
     # pickle-able in order to be called in subprocesses when multithread tokenizing
-    tokenizer = Tokenizer(tok_func=SentencepieceTokenizer, lang=str(path / 'models'), rules=rules)
+    tokenizer = Tokenizer(tok_func=SentencepieceTokenizer, lang=str(path / 'models'))#, rules=rules)
     
     clear_cache_directory(path, cache_name)
 
