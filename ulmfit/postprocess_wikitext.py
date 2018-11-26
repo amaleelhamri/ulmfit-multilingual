@@ -93,13 +93,13 @@ def postprocess_wikitext(path, lang):
         unk_path = dest_path / file_path.name
         replace_numbers(file_path, unk_path)
 
-    # replace words not in the vocab with <unk>
-    wiki_train = dest_path / f'{lang}.wiki.train.tokens'
-    vocab = build_vocab(wiki_train)
-    print(f'{wiki_path} vocab size: {len(vocab)}')
-    for split in splits:
-        unk_path = dest_path / f'{lang}.wiki.{split}.tokens'
-        limit_vocab(unk_path, vocab)
+    # # replace words not in the vocab with <unk>
+    # wiki_train = dest_path / f'{lang}.wiki.train.tokens'
+    # vocab = build_vocab(wiki_train)
+    # print(f'{wiki_path} vocab size: {len(vocab)}')
+    # for split in splits:
+    #     unk_path = dest_path / f'{lang}.wiki.{split}.tokens'
+    #     limit_vocab(unk_path, vocab)
 
 if __name__ == '__main__':
     fire.Fire(postprocess_wikitext)
