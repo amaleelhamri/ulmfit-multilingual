@@ -10,8 +10,7 @@ import json
 
 from shutil import copyfile
 
-from sacremoses import MosesTokenizer
-
+from fastai_contrib.utils import SentencepieceTokenizer, get_sentencepiece
 
 def get_texts(root):
     for dir_ in root.iterdir():
@@ -27,36 +26,24 @@ def get_texts(root):
                     yield text
 
 
-def write_wikitext(file_path, text_iter, mt, num_tokens, mode='w'):
+def write_wikitext(file_path, text_iter, sp, num_tokens, mode='w'):
     total_num_tokens = 0
     print(f'Writing to {file_path}...')
     i = 0
     with open(file_path, mode, encoding='utf-8') as f_out:
         for i, text in enumerate(text_iter):
 
-            num_tokens_article = 0  # count the number of tokens in an article
-            tokenized_paragraphs = []
-            paragraphs = text.split('\n')
-
-            for paragraph in paragraphs:
-                tokenized = mt.tokenize(paragraph.strip(), return_str=True)
-                tokenized_paragraphs.append(tokenized)
-
-                tokens = tokenized.split(' ')  # split on whitespace to keep newlines
-                # don't count empty lines
-                tokens = [token for token in tokens if token]
-
-                # calculate length based on tokens; add 1 for newline
-                num_tokens_article += len(tokens) + 1
+            tokens_article = sp.tokenizer(text)
+            num_tokens_article = len(tokens_article)
+            tokenized_article = ' '.join(tokens_article)
 
             if num_tokens_article < 100:
                 # only use articles that have at least 100 tokens
                 continue
 
-            for tokenized in tokenized_paragraphs:
-                f_out.write(tokenized + '\n')
+            f_out.write(tokenized_article+'\n')
 
-            total_num_tokens += num_tokens_article + 1
+            total_num_tokens += num_tokens_article
             if num_tokens is not None and total_num_tokens > num_tokens:
                 break
             if i % 10000 == 0 and i > 0:
@@ -72,8 +59,16 @@ def main(args):
     assert input_path.exists(), f'Error: {input_path} does not exist.'
     output.mkdir(exist_ok=True)
 
-    mt = MosesTokenizer(args.lang)
+    # train sentencepiece model using premerged wiki text (all)
+    _ = get_sentencepiece(output/ f'{args.lang}', output / f'{args.lang}' / 'all.csv', 
+                            'wt-all', vocab_size=args.max_vocab, 
+                            input_sentence_size=int(float(args.input_sentence_size)), 
+                            character_coverage=args.character_coverage)
 
+    # load sentencepiece tokenizer
+    sp = SentencepieceTokenizer(model_dir=output/ f'{args.lang}'  / 'models')
+
+    # create wiki text using sentencepiece model
     sml_wiki = output / f'{args.lang}-2'
     lrg_wiki = output / f'{args.lang}-100'
     all_wiki = output / f'{args.lang}-all'
@@ -87,7 +82,7 @@ def main(args):
     token_nums = [2000000, 200000, 200000]
     for split, token_num in zip(splits, token_nums):
         sml_file_path = sml_wiki / f'{args.lang}.wiki.{split}.tokens'
-        write_wikitext(sml_file_path, text_iter, mt, token_num)
+        write_wikitext(sml_file_path, text_iter, sp, token_num)
         lrg_file_path = lrg_wiki / f'{args.lang}.wiki.{split}.tokens'
         all_file_path = all_wiki / f'{args.lang}.wiki.{split}.tokens'
         # copy the content of the small file to the large file
@@ -97,10 +92,10 @@ def main(args):
 
     # add the new articles to the existing ones
     lrg_wiki_train = lrg_wiki / f'{args.lang}.wiki.train.tokens'
-    write_wikitext(lrg_wiki_train, text_iter, mt, 98000000, mode='a')
+    write_wikitext(lrg_wiki_train, text_iter, sp, 98000000, mode='a')
     all_wiki_train = all_wiki / f'{args.lang}.wiki.train.tokens'
     copyfile(lrg_wiki_train, all_wiki_train)
-    write_wikitext(all_wiki_train, text_iter, mt,  None, mode='a') 
+    write_wikitext(all_wiki_train, text_iter, sp,  None, mode='a') 
 
 if __name__ == '__main__':
 
@@ -115,5 +110,12 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--lang', required=True,
                         help='the iso code of the language of the Wikipedia '
                              'documents, e.g. en, fr, de, etc.')
+    parser.add_argument('--max_vocab', required=False, default=16000,
+                        help='max vocabulary size for sentencepiece')
+    parser.add_argument('--character_coverage', required=False, default=0.995,
+                        help='character coverage for sentence piece '
+                             'recommended: 0.995 for Japanese, Chinese and Korean, 1.0 for else')
+    parser.add_argument('--input_sentence_size', required=False, default=1E8,
+                        help='max number of sentences used to train sentencepiece model')
     args = parser.parse_args()
     main(args)
