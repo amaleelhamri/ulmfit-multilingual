@@ -76,14 +76,10 @@ def get_sentencepiece(path:PathOrStr, trn_path:Path, name:str, rules:ListRules=N
         text = list(filter(None, text))
         
         raw_text_path = path / cache_name / 'all_text.txt'
-        if rules != []:
-            raw_text = reduce(lambda t, rule: rule(t), rules, '\n'.join(text))
-            with open(raw_text_path, 'w') as f:
-                f.write(raw_text)
-        else:
-            # work around for now. OSX can't write 2GB+ data.
-            copyfile(trn_path,raw_text_path)
-            del text
+        raw_text = reduce(lambda t, rule: rule(t), rules, '\n'.join(text))
+        with open(raw_text_path, 'w') as f:
+            f.write(raw_text)
+        
       
         sp_params = f"--input={raw_text_path} --pad_id={pad_idx} --unk_id=0 " \
                     f"--character_coverage={character_coverage} --bos_id=-1 --eos_id=-1 " \
