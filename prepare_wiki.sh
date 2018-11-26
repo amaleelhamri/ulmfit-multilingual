@@ -55,4 +55,13 @@ n|N ) echo "Exiting";exit 1;;
 * ) echo "Invalid answer";exit 1;;
 esac
 
-python -m ulmfit.merge_wiki -i "${EXTR_PATH}" -o "${OUT_PATH}" 
+if [ ! -f "${OUT_PATH}/all.csv" ]; then
+  python -m ulmfit.merge_wiki -i "${EXTR_PATH}" -o "${OUT_PATH}" 
+else
+  echo "${OUT_PATH}/all.csv already exists. Skipping merge."
+fi
+
+# train sentencepiece model from all merged text 
+# and split data into train and valid for 3 different token sizes
+python -m ulmfit.create_wikitext -i "${EXTR_PATH}"  -l "${LANG}" -o "${WIKI_DIR}" \
+  --max_vocab 16000 --character_coverage 0.995 --input_sentence_size 1E8
