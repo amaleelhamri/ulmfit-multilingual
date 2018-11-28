@@ -82,7 +82,7 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vo
         # here we're just loading the trained spm model
         sp = get_sentencepiece(spm_dir, None, 'wt-all', vocab_size=max_vocab)
 
-        data_lm = TextLMDataBunch.from_csv(dir_path, 'train.csv', **sp)
+        data_lm = TextLMDataBunch.from_csv(dir_path, 'train.csv',**sp)
         itos = data_lm.train_ds.vocab.itos
         stoi = data_lm.train_ds.vocab.stoi
     else:
@@ -141,6 +141,11 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vo
     learn.opt_fn = partial(optim.Adam, betas=(0.8, 0.99))
     learn.true_wd = False
 
+    # save itos
+    print(f"Saving itos at {learn.path / learn.model_dir}")
+    pickle.dump(itos,open(learn.path / learn.model_dir / f'itos_{name}.pkl','wb'))
+
+    # fit the model
     fit_one_cycle(learn, num_epochs, 5e-3, (0.8, 0.7), wd=1e-7)
 
     if not subword and max_vocab is None:
@@ -158,6 +163,8 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vo
     opt_state_path = learn.path / learn.model_dir / f'{model_name}3_{name}_state.pth'
     print(f"Saving optimiser state at {opt_state_path}")
     torch.save(learn.opt.opt.state_dict(), opt_state_path)
+
+    
 
     results['accuracy'] = learn.validate()[1]
     return results
