@@ -35,13 +35,13 @@ def write_wikitext(file_path, text_iter, sp, num_tokens, mode='w'):
 
             tokens_article = sp.tokenizer(text)
             num_tokens_article = len(tokens_article)
-            tokenized_article = ' '.join(tokens_article)
+            # tokenized_article = ' '.join(tokens_article)
 
             if num_tokens_article < 100:
                 # only use articles that have at least 100 tokens
                 continue
 
-            f_out.write(tokenized_article+'\n')
+            f_out.write(text+'\n')
 
             total_num_tokens += num_tokens_article
             if num_tokens is not None and total_num_tokens > num_tokens:
