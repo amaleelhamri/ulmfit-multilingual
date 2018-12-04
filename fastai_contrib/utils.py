@@ -12,7 +12,7 @@ import csv
 from shutil import copyfile
 
 from functools import reduce
-from fastai.text.transform import Tokenizer, BaseTokenizer, Vocab
+from fastai.text.transform import Tokenizer, BaseTokenizer, Vocab, default_pre_rules, default_post_rules, default_spec_tok
 from fastai.torch_core import *
 
 import shutil
@@ -56,7 +56,7 @@ class SentencepieceTokenizer(BaseTokenizer):
         pass
 
 
-def get_sentencepiece(path:PathOrStr, trn_path:Path, name:str, rules:ListRules=[],
+def get_sentencepiece(path:PathOrStr, trn_path:Path, name:str, rules:ListRules=default_pre_rules,
                       vocab_size:int=30000, model_type:str='unigram', input_sentence_size:int=1E7, 
                       pad_idx:int=PAD_TOKEN_ID, character_coverage:float=1.0):
     try:
@@ -85,7 +85,8 @@ def get_sentencepiece(path:PathOrStr, trn_path:Path, name:str, rules:ListRules=[
                     f"--character_coverage={character_coverage} --bos_id=-1 --eos_id=-1 " \
                     f"--input_sentence_size={int(input_sentence_size)} " \
                     f"--model_prefix={path / 'models' / 'spm'} " \
-                    f"--vocab_size={vocab_size} --model_type={model_type} "
+                    f"--vocab_size={vocab_size} --model_type={model_type} "\
+                    f"--user_defined_symbols={','.join(default_spec_tok)}"
         spm.SentencePieceTrainer.Train(sp_params)
   
         with open(path / 'models' / 'spm.vocab', 'r') as f:
@@ -98,7 +99,7 @@ def get_sentencepiece(path:PathOrStr, trn_path:Path, name:str, rules:ListRules=[
     vocab = Vocab(pickle.load(open(path / 'models' / f'itos_{name}.pkl', 'rb')))
     # We cannot use lambdas or local methods here, since `tok_func` needs to be
     # pickle-able in order to be called in subprocesses when multithread tokenizing
-    tokenizer = Tokenizer(tok_func=SentencepieceTokenizer, lang=str(path / 'models'), pre_rules=rules)
+    tokenizer = Tokenizer(tok_func=SentencepieceTokenizer, lang=str(path / 'models'),pre_rules=rules)
     
     clear_cache_directory(path, cache_name)
 
