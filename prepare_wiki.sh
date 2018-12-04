@@ -64,4 +64,4 @@ fi
 # train sentencepiece model from all merged text 
 # and split data into train and valid for 3 different token sizes
 python -m ulmfit.create_wikitext -i "${EXTR_PATH}"  -l "${LANG}" -o "${WIKI_DIR}" \
-  --max_vocab 16000 --character_coverage 0.995 --input_sentence_size 1E8
+  --max_vocab 8000 --character_coverage 0.995 --input_sentence_size 1E7
