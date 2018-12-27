@@ -34,7 +34,15 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-data/
+data/*
+!data/wiki
+data/wiki/*
+!data/wiki/ja-100
+data/wiki/ja-100/*
+!data/wiki/ja-100/models/
+data/wiki/ja-100/models/*
+!data/wiki/ja-100/models/itos_wt-100.pkl
+!data/wiki/ja-100/models/qrnn_wt-100.pth
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
