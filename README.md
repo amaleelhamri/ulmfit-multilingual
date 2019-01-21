@@ -1,6 +1,6 @@
 # ulmfit-multilingual
 Temporary repository used for collaboration on application of for multiple languages.  
-This branch (japanese) contains the code for Japanese.
+This branch (japanese) contains the code and the pretrained language model for Japanese.
 
 ## data directory strucutre
 
@@ -14,9 +14,11 @@ data
 │       └── lm
 ├── MedWeb
 ├── wiki
+│   ├── ja
+│   │   └── models      <- sentencepiece model
 │   ├── ja-100
 │   │   ├── figs
-│   │   └── models
+│   │   └── models      <- pretrained lm
 │   ├── ja-2
 │   └── ja-all
 ├── wiki_dumps
@@ -103,7 +105,7 @@ $ python prepare_MedWeb_data.py prepare
 $ python finetune_lm_classify_MedWeb.py experiment
 ```
 
-## Footnote
+### Footnote
 
 To see all available input arguments for finetuning and classifer training (step 3), run `python <name of python file> -- --help` .  
 For example, running the following line
