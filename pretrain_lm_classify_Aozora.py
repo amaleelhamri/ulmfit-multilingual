@@ -354,8 +354,9 @@ class Aozora():
                 
             ## Save artifacts
             # pretrained lm
-            mlflow.log_artifact(self.model_dir/f"{self.pretrained_fnames[0]}.pth")
-            mlflow.log_artifact(self.model_dir/f"{self.pretrained_fnames[1]}.pkl")
+            if self.use_pretrained_lm:
+                mlflow.log_artifact(self.model_dir/f"{self.pretrained_fnames[0]}.pth")
+                mlflow.log_artifact(self.model_dir/f"{self.pretrained_fnames[1]}.pkl")
             
             # fine tuned lm
             if self.fine_tune_lm & self.use_lm:
