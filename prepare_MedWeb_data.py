@@ -2,14 +2,22 @@
 """
 Prepare data for MedWeb classification
 
-First, you need to download the texts from MedWeb .
-To do so, clone the following awesome repository and run aozora_scrape.py
-https://github.com/shibuiwilliam/aozora_classification
-(As of Dec. 2018, the config file, target_author.csv has a minor bug.
-Change http to https and everything will be fine)
+First, you need to download the data from MedWeb website.
+To do so, fill in the application form follwing the links from below.
+http://research.nii.ac.jp/ntcir/permission/ntcir-13/perm-en-MedWeb.html
+
+    Project website: NTCIR-13 MedWeb
+    http://research.nii.ac.jp/ntcir/permission/ntcir-13/perm-en-MedWeb.html
+
+Place the downloaded files in the following directory like this
+data/MedWeb/
+L NTCIR-13_MedWeb_ja_training.xlsx
+L NTCIR-13_MedWeb_ja_test.xlsx
 
 After doing so, run this code to prepare data for lm pretraining
 and the following classification.
+This code will create tokens and labels from the texts 
+and saves them in files.
 
 For usage instructions execute the following lines:
 >>> python prepare_MedWeb_data.py -- --help
@@ -19,17 +27,9 @@ For usage instructions execute the following lines:
 
 import fire
 import numpy as np
-import pickle
-from fastai.text import TextLMDataBunch, TextClasDataBunch, language_model_learner, text_classifier_learner, LanguageLearner
 from fastai_contrib.utils import PAD, UNK, read_clas_data, PAD_TOKEN_ID, DATASETS, TRN, VAL, TST, ensure_paths_exists, get_sentencepiece
-from fastai.text.transform import Vocab
 from pathlib import Path
 import pandas as pd
-import csv
-from sklearn.model_selection import train_test_split
-import glob
-import shutil
-import dask.dataframe as dd
 
 class PrepareMedWeb():
     """
@@ -39,18 +39,13 @@ class PrepareMedWeb():
         self, 
         data_dir='data',
         lang='ja' ,
-        cuda_id=0 ,
         pretrain_name='wt-100', 
         model_dir='data/wiki/ja-100/models',
         fig_dir='data/wiki/ja-100/figs',
         max_vocab=8000,
         name='MedWeb-clas',
         dataset='MedWeb' ,
-        frac_ds=1.0,
         spm_dir = 'data/wiki/ja/',
-        num_trains = [1e2,1e3,1e4,1e5],
-        dir_orig="../aozora_classification/aozora_data/",
-        dir_dest="data/MedWeb/csv/",
         ):
 
         self.data_dir = Path(data_dir)
@@ -61,102 +56,80 @@ class PrepareMedWeb():
         self.fig_dir = Path(fig_dir)
         self.fig_dir.mkdir(exist_ok=True)
         self.spm_dir = spm_dir
-        self.num_trains = num_trains
         self.max_vocab = max_vocab
 
-        self.dir_orig = dir_orig
-        self.dir_dest = dir_dest
 
         print(f'Dataset: {dataset}. Language: {lang}.')
 
 
-    def copy_csv(self):
-        "copy csvs from original directory"
+    def get_text_label(self):
+        """
+        1. Read train and test files
+        2. Reshape the data into text and labels
+        """
+        # read files
+        trn = pd.read_excel(self.dataset_dir/'NTCIR-13_MedWeb_ja_training.xlsx',sheet_name='ja_train')
+        tst = pd.read_excel(self.dataset_dir/'NTCIR-13_MedWeb_ja_test.xlsx',sheet_name='ja_test')
 
-        Path(self.dir_dest).mkdir(parents=True, exist_ok=True)
-        csvs = glob.glob(self.dir_orig+"*/csv/*.csv", recursive=True)
+        # list of labels
+        lbl_names = trn.columns[2:]
 
-        for f in csvs:
-            shutil.copy(f,self.dir_dest)
+        # put labels into a list
+        trn_lbl = []
+        for i, row in trn.iterrows():
+            trn_lbl.append(lbl_names[(row[2:]=='p')].tolist())
 
+        tst_lbl = []
+        for i, row in tst.iterrows():
+            tst_lbl.append(lbl_names[(row[2:]=='p')].tolist())
 
-    def split_data(self):
-        "collect lines from all authors and split them into train/valid/test"
+        # reshape the data (rename tst to val because databunch expects val to exist)
+        trn_df = pd.DataFrame({1:trn['Tweet'].values, 0:trn_lbl},columns=[0, 1])
+        val_df = pd.DataFrame({1:tst['Tweet'].values, 0:tst_lbl},columns=[0, 1])
 
-        # ## read data
-        ddf = dd.read_csv(self.dir_dest+'*.csv')
-        ddf = ddf.rename(columns={'Unnamed: 0':'line_num'})
+        return trn_df, val_df
 
-        # filter lines: remove headers and short lines
-        # line number >=20 and number of letters >= 20
-        ddf_fitered = ddf.loc[(ddf['line_num']>=20) & (ddf['line'].str.len()>=20),['auth','line']]
-
-        # ### train test split
-        df = ddf_fitered.compute()
-        trn_val, tst = train_test_split(df,test_size=0.05,random_state=0)
-        trn, val = train_test_split(trn_val,test_size=5/95,random_state=0)
-
-        # print data size
-        print('Data size')
-        print('Train: {}'.format(trn.shape[0]))
-        print('Validate: {}'.format(val.shape[0]))
-        print('Test: {}'.format(tst.shape[0]))
-
-        # ### save
-        trn.to_csv('data/MedWeb/train.csv',header=None,index=None)
-        val.to_csv('data/MedWeb/valid.csv',header=None,index=None)
-        tst.to_csv('data/MedWeb/test.csv',header=None,index=None)
-
-
-    def prepare_databunch(self):
-        "prepare databunch for lm and classification using different sizes of train data"
+    def tokenize(self, trn_df, val_df):
+        "Tokenize the text"
         # here we're just loading the trained spm model
         sp = get_sentencepiece(self.spm_dir, None, 'wt-all', vocab_size=self.max_vocab)
+        tok = sp['tokenizer']
 
+        # tokenize
+        trn_tok = np.asarray(tok.process_all(trn_df[1]))
+        val_tok = np.asarray(tok.process_all(val_df[1]))
+        
+        return trn_tok, val_tok
+    
 
-        # load train, valid in df
-        train_df = pd.read_csv(self.dataset_dir/'train.csv',header=None)
-        valid_df = pd.read_csv(self.dataset_dir/'valid.csv',header=None)
-        test_df = pd.read_csv(self.dataset_dir/'test.csv',header=None)
+    def save(self, trn_df, val_df, trn_tok, val_tok):
+        "Save tokens and labels"
 
-        # create databunch for different sizes of train data
-        print("Creating databunch for different sizes of train data")
-        for num_train in self.num_trains:
-            num_train = int(num_train)
-            print("Size: {}".format(num_train))
-            
-            # sample train data
-            tmp_train_df = train_df.sample(n=num_train,random_state=42)
-            
-            # create data bunches
-            tmp_lm = TextLMDataBunch.from_df(path=self.dataset_dir,train_df=tmp_train_df,valid_df=valid_df,test_df=test_df,**sp)
-            tmp_clas = TextClasDataBunch.from_df(path=self.dataset_dir,train_df=tmp_train_df,valid_df=valid_df,test_df=test_df,**sp)
-            
-            # name of tmp cache
-            tmp_cache_lm = Path(f'tmp/lm/{num_train}')
-            tmp_cache_clas = Path(f'tmp/clas/{num_train}')
-            
-            # save
-            tmp_lm.save(tmp_cache_lm)
-            tmp_clas.save(tmp_cache_clas)
+        # tokens
+        np.save(self.dataset_dir/'trn_tok.npy', trn_tok)
+        np.save(self.dataset_dir/'val_tok.npy', val_tok)
+
+        # labels
+        np.save(self.dataset_dir/'trn_lbl.npy', trn_df[0].values)
+        np.save(self.dataset_dir/'val_lbl.npy', val_df[0].values)
     
     
     def prepare(self):
         """
         Executes all the steps necessary to prepare data
-        1. copy csv
-        2. split data
-        3. prepare databunch using different train size
+        1. read data from xlsx
+        2. tokenize text
+        3. save tokens and labels
         """
         
-        print('Copying csv...')
-        self.copy_csv()
+        print('Reading data...')
+        trn_df, val_df = self.get_text_label()
 
-        print('Splitting data...')
-        self.split_data()
+        print('Tokenizing text...')
+        trn_tok, val_tok = self.tokenize(trn_df, val_df)
 
-        print('Preparing databunch...')
-        self.prepare_databunch()
+        print('Saving tokens and labels...')
+        self.save(trn_df, val_df, trn_tok, val_tok)
 
 
 def main():
