@@ -1,6 +1,6 @@
 # ulmfit-multilingual
 Temporary repository used for collaboration on application of for multiple languages.  
-This branch (japanese) contains the code and the pretrained language model for Japanese.
+This branch (japanese) contains the code and the pretrained models (sentencepiece model and language model) for Japanese.
 
 ## data directory strucutre
 
