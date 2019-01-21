@@ -53,7 +53,7 @@ data/wiki/ja-100/models/*
 data/wiki/ja/*
 !data/wiki/ja/models/
 data/wiki/ja/models/*
-!data/wiki/ja/models/itos_wt-100.pkl
+!data/wiki/ja/models/itos_wt-all.pkl
 !data/wiki/ja/models/spm.model
 !data/wiki/ja/models/spm.vocab
 
