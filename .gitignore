@@ -34,15 +34,28 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# pretrained models
 data/*
 !data/wiki
 data/wiki/*
+
+# pretrained lm
 !data/wiki/ja-100
 data/wiki/ja-100/*
 !data/wiki/ja-100/models/
 data/wiki/ja-100/models/*
 !data/wiki/ja-100/models/itos_wt-100.pkl
 !data/wiki/ja-100/models/qrnn_wt-100.pth
+
+# pretrained sentencepiece model 
+!data/wiki/ja
+data/wiki/ja/*
+!data/wiki/ja/models/
+data/wiki/ja/models/*
+!data/wiki/ja/models/itos_wt-100.pkl
+!data/wiki/ja/models/spm.model
+!data/wiki/ja/models/spm.vocab
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
