@@ -5,13 +5,20 @@
 ROOT="data"
 echo "Saving data in ""$ROOT"
 
-if [ "$1" == "" ] ; then
+if [ $1 = "" ] ; then
     read -r -p "Choose a language (e.g. en, bh, fr, etc.): " choice
     LANG="$choice"
 else
     LANG="$1"
 fi
 echo "Chosen language: ""$LANG"
+
+if [ "$2" = "" ] ; then
+    MAX_VOCAB=8000
+else
+    MAX_VOCAB=$2
+fi
+echo "Max vocabulary size: ""$MAX_VOCAB"
 
 DUMP_DIR="${ROOT}/wiki_dumps"
 EXTR_DIR="${ROOT}/wiki_extr"
@@ -64,4 +71,4 @@ fi
 # train sentencepiece model from all merged text 
 # and split data into train and valid for 3 different token sizes
 python -m ulmfit.create_wikitext -i "${EXTR_PATH}"  -l "${LANG}" -o "${WIKI_DIR}" \
-  --max_vocab 8000 --character_coverage 0.995 --input_sentence_size 1E7
+  --max_vocab ${MAX_VOCAB} --character_coverage 0.995 --input_sentence_size 1E7
