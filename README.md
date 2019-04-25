@@ -18,7 +18,7 @@ data
 │   │   └── models      <- sentencepiece model
 │   ├── ja-100
 │   │   ├── figs
-│   │   └── models      <- pretrained lm
+│   │   └── models      <- pretrained lm (available from my google drive)
 │   ├── ja-2
 │   └── ja-all
 ├── wiki_dumps
@@ -29,20 +29,13 @@ data
 ...
         └── BB
 ```
+## Pretrained language model
 
-## how to contribute
-We have a fork of fastai to propose changes to fastai.text, with a branch for this project:
- https://github.com/n-waves/fastai/tree/ulmfit_multilingual  
-
-Let us know that you want to start collaboration on fastai forum thread: [Multilingual ULMFIT](https://forums.fast.ai/t/multilingual-ulmfit/28117)
-and you will get access to both repositories.
-
-- Follow the [developer installation of fastai](https://github.com/fastai/fastai#developer-install)
-
-
-## Repo structure
-
-- `fastai_contrib`  -- anything that can be ported to fastai once we finish the project like:  NLI models, Sentence Piece tok.
+A pretrained Japanese language model that was trained on Wikipedia data is available on my [google drive](#TODO).  
+In order to use it, follow the steps below.
+1. copy the contents of my google drive to data/wiki/ja-100/models/ 
+2. If you want to see an example usage, proceed to [step #3](#3.-Finetuning-of-lm-and-training-of-classifier) in the following Usage section
+3. If you want to use the pretrained model on your own dataset, read the scripts mentioned in [step #3](#3.-Finetuning-of-lm-and-training-of-classifier) of Usage section and modify them to accomodate your dataset.
 
 
 ## Usage
