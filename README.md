@@ -34,8 +34,8 @@ data
 A pretrained Japanese language model trained on Wikipedia data is available on my [google drive](https://drive.google.com/open?id=1op2Ex2FgBx7JB0Ld4tKDWH_LQ8HUPrq5).  
 In order to use it, follow the steps below.
 1. copy the contents of my google drive to data/wiki/ja-100/models/ 
-2. If you want to see an example usage, proceed to [step #3](#3.-Finetuning-of-lm-and-training-of-classifier) in the following Usage section
-3. If you want to use the pretrained model on your own dataset, read the scripts mentioned in [step #3](#3.-Finetuning-of-lm-and-training-of-classifier) of Usage section and modify them to accomodate your dataset.
+2. If you want to see an example usage, proceed to [step #3](#3.-finetuning-of-lm-and-training-of-classifier) in the following Usage section
+3. If you want to use the pretrained model on your own dataset, read the scripts mentioned in [step #3](#3.-finetuning-of-lm-and-training-of-classifier) of Usage section and modify them to accomodate your dataset.
 
 
 ## Usage
