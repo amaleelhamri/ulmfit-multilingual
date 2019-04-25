@@ -31,7 +31,7 @@ data
 ```
 ## Pretrained language model
 
-A pretrained Japanese language model that was trained on Wikipedia data is available on my [google drive](#TODO).  
+A pretrained Japanese language model trained on Wikipedia data is available on my [google drive](https://drive.google.com/open?id=1op2Ex2FgBx7JB0Ld4tKDWH_LQ8HUPrq5).  
 In order to use it, follow the steps below.
 1. copy the contents of my google drive to data/wiki/ja-100/models/ 
 2. If you want to see an example usage, proceed to [step #3](#3.-Finetuning-of-lm-and-training-of-classifier) in the following Usage section
