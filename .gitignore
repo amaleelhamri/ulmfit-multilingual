@@ -48,6 +48,9 @@ data/wiki/ja-100/models/*
 !data/wiki/ja-100/models/itos_wt-100.pkl
 !data/wiki/ja-100/models/qrnn_wt-100.pth
 
+# pretrained lm in models directory are ignored because they are too large
+models/lm/*
+
 # pretrained sentencepiece model 
 !data/wiki/ja
 data/wiki/ja/*
